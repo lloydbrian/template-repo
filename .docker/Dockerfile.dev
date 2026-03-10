@@ -1,0 +1,38 @@
+# This is a sample
+# Dockerfile for development environment
+# It assumes you have a pyproject.toml and a README.md in the same directory
+
+# Use an official Python runtime as a parent image
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --upgrade pip
+
+# Set the working directory in the container
+WORKDIR /app
+
+RUN pip install --no-cache-dir --upgrade uv
+
+# Copy the pyproject.toml, uv.lock and README.md to the container WORKDIR (aka the root of the project)
+COPY pyproject.toml uv.lock README.md ./
+
+# Copy the rest of the application code to the container WORKDIR
+COPY src/ ./src/
+
+RUN uv venv /opt/.venv
+
+ENV UV_PROJECT_ENVIRONMENT=/opt/.venv
+
+RUN uv sync
+
+# Make sure the virtual environment is activated when the container starts
+ENV PATH="/opt/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Command to run the application (adjust as needed)
+# CMD ["python", "-m", "src.main"]
+# assumes you have src/template_sample_app/main.py with a FastAPI app instance = FastAPI() and you want to run it with uvicorn
+CMD ["python", "-m", "uvicorn", "template_sample_app.main:app", "--host", "0.0.0.0", "--port", "8000"]
