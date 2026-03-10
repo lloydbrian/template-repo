@@ -1,5 +1,5 @@
 {
- "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
- "python.terminal.activateEnvironment": true,
- "terminal.integrated.fontFamily": "JetBrainsMono Nerd Font"
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "terminal.integrated.fontFamily": "JetBrainsMono Nerd Font",
 }
