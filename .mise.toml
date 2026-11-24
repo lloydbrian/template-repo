@@ -1,6 +1,7 @@
 # .mise.toml — team baseline: Python pin, environment, and every quality gate as a task
 [tools]
 python = "3.14"          # keep in step with requires-python, the container base image and ruff/mypy targets
+trivy = "latest"          # image scanner used by `mise run scan` (local and CI)
 
 [env]
 PYTHONDONTWRITEBYTECODE = "1"
