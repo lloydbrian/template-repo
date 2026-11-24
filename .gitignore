@@ -216,18 +216,91 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# ---------------------------------------------------------------------------
+# ===========================================================================
 # Team standard additions (keep at the end of this file)
-# ---------------------------------------------------------------------------
+# .gitignore prevents accidents; gitleaks in pre-commit is the real secret guard.
+# Personal/OS files are best kept in your global ignore as well:
+#   git config --global core.excludesFile ~/.config/git/ignore
+# ===========================================================================
+
+# --- Secrets and credentials ------------------------------------------------
 # Environment files: every variant is local-only; only the example is committed
+.env
 .env.*
 !.env.example
-# Tool caches and build output
+.envrc
+# Keys, certificates and keystores
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ecdsa*
+id_ed25519*
+*.kdbx
+# Credential files and folders
+.netrc
+.pypirc
+credentials*.json
+service-account*.json
+*.secret
+secrets/
+.secrets/
+kubeconfig*
+.kube/
+.aws/
+.azure/
+
+# --- Local, per-developer overrides ----------------------------------------
+.mise.local.toml
+mise.local.toml
+.container/compose.override.yaml
+.claude/settings.local.json
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+
+# --- Python and tool caches -------------------------------------------------
 .ruff_cache/
 .pytest_cache/
+.mypy_cache/
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
 *.egg-info/
-# Container scan output
+.cache/
+
+# --- Containers ---------------------------------------------------------------
 *-image.tar
+
+# --- Models, experiments and large derived files ----------------------------
+# Pickles can execute code when loaded: never commit or load untrusted ones
+*.pkl
+*.pickle
+*.joblib
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.h5
+mlruns/
+wandb/
+lightning_logs/
+
+# --- OS and editor noise ------------------------------------------------------
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# --- AI assistant scratch output ----------------------------------------------
+Claude outputs/
