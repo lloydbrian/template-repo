@@ -12,3 +12,4 @@
 notebooks/
 data/
 *-image.tar
+**/*.egg-info/

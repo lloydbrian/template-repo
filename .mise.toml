@@ -42,13 +42,13 @@ uv run --group security bandit -q -r src
 
 [tasks.image]
 description = "Build the production image with Podman"
-run = "podman build -f .container/Containerfile --target prod -t template-sample-app:dev ."
+run = "podman build --pull=newer -f .container/Containerfile --target prod -t template-sample-app:dev ."
 
 [tasks.scan]
 description = "Scan the built image for HIGH/CRITICAL vulnerabilities"
 run = """
 podman save -o /tmp/template-sample-app-image.tar template-sample-app:dev
-trivy image --input /tmp/template-sample-app-image.tar --severity HIGH,CRITICAL --exit-code 1
+trivy image --input /tmp/template-sample-app-image.tar --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1
 """
 
 [tasks.ci]

@@ -1,7 +1,11 @@
 # .container/Containerfile — one multi-stage file; build a stage with --target dev|test|prod
 FROM python:3.14-slim AS base
+# Patch OS packages at build time; remove pip (runtime never needs it; uv installs everything)
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+ && rm -rf /var/lib/apt/lists/* \
+ && python -m pip uninstall -y pip
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
-    UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 \
+    UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_NO_CACHE=1 \
     PATH="/opt/venv/bin:$PATH"
 # Pin this tag to a specific uv release in real builds
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
