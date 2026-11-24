@@ -1,2 +1,1 @@
-# src/sample_app/__init__.py
-# This file makes Python treat the directory as a package
+"""Sample FastAPI service built on the team Python scaffold."""

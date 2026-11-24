@@ -1,38 +1,35 @@
-# /src/template_sample_app/main.py
+"""FastAPI application: a landing route and a health check."""
+
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+
+from template_sample_app.config import load_env
+
+load_env()
 
 app = FastAPI(
-    title=os.getenv("APP_TITLE", "Sample App"),
-    version=os.getenv("APP_VERSION", "0.1.0"),
+    title=os.getenv("APP_TITLE") or "Sample App",
+    version=os.getenv("APP_VERSION") or "0.1.0",
 )
 
 
 @app.get("/health", tags=["system"])
-def health() -> JSONResponse:
-    """Simple health check endpoint for docker / load balancers."""
-    return JSONResponse(
-        content={
-            "status": "ok",
-            "service": app.title,
-            "version": app.version,
-            "timestamp_utc": datetime.now(datetime.utc).isoformat(),
-        },
-        status_code=200,
-    )
+def health() -> dict[str, Any]:
+    """Health check for container runtimes and load balancers."""
+    return {
+        "status": "ok",
+        "service": app.title,
+        "version": app.version,
+        "timestamp_utc": datetime.now(UTC).isoformat(),
+    }
 
 
 @app.get("/", tags=["system"])
-def root() -> JSONResponse:
-    """Root endpoint for testing. Basic landing point"""
-    return JSONResponse(
-        content={"message": "Service is running! Try /health for more info."},
-        # docs= "/docs",
-        # openapi="/openapi.json",
-        status_code=200,
-    )
+def root() -> dict[str, str]:
+    """Landing route for a quick manual check."""
+    return {"message": "Service is running. Try /health or /docs."}

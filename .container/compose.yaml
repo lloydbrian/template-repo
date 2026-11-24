@@ -1,0 +1,13 @@
+# .container/compose.yaml — local development with Podman:  podman compose -f .container/compose.yaml up
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .container/Containerfile
+      target: dev
+    command: uvicorn template_sample_app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports: ["8000:8000"]
+    volumes: ["..:/app:Z"]            # :Z relabels for SELinux hosts; harmless elsewhere
+    env_file: [../.env.dev]           # local values only; never commit this file
+    environment:
+      APP_ENV: dev
