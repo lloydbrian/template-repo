@@ -196,9 +196,9 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#   and can be added to the global gitignore or merged into this file. However, if you prefer,
 #   you could uncomment the following to ignore the entire vscode folder
 # .vscode/
 
@@ -215,3 +215,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---------------------------------------------------------------------------
+# Team standard additions (keep at the end of this file)
+# ---------------------------------------------------------------------------
+# Environment files: every variant is local-only; only the example is committed
+.env.*
+!.env.example
+# Tool caches and build output
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+# Container scan output
+*-image.tar

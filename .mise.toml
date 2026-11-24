@@ -1,56 +1,60 @@
-#SAMPLE .mise.toml
-
+# .mise.toml — team baseline: Python pin, environment, and every quality gate as a task
 [tools]
-python = "3.14.3"
-
+python = "3.14"          # keep in step with requires-python, the container base image and ruff/mypy targets
 
 [env]
-# Common for src-layout projects if you don't install editable:
-PYTHONPATH = "./src"
-PIP_DISABLE_PIP_VERSION_CHECK = "1"
 PYTHONDONTWRITEBYTECODE = "1"
 PYTHONUNBUFFERED = "1"
+PIP_DISABLE_PIP_VERSION_CHECK = "1"
 
-# should only be run inside the container or with the virtual environment activated locally
-# command bootstrap is executed only once at the start of the project to set up the environment, install dependencies, etc
 [tasks.bootstrap]
-description = "Create venv and install locked dependencies + pre-commit hooks"
+description = "Create .venv, lock if needed, install deps and hooks (run once per clone)"
 run = """
 uv venv
-if [ ! -f uv.lock ]; then uv lock; fi
-uv sync --dev
+[ -f uv.lock ] || uv lock
+uv sync
 uv run pre-commit install
 """
 
 [tasks.format]
 description = "Auto-format code"
-run = """
-uv run ruff format .
-"""
+run = "uv run ruff format ."
 
 [tasks.lint]
-description = "Lint (and fail on issues)"
-run = """
-uv run ruff check .
-"""
+description = "Lint (fails on issues)"
+run = "uv run ruff check ."
+
+[tasks.type]
+description = "Static type check"
+run = "uv run mypy"
 
 [tasks.test]
-description = "Run unit tests"
-run = """
-uv run pytest -q
-"""
+description = "Unit tests with coverage"
+run = "uv run pytest"
 
 [tasks.security]
-description = "Basic dependency audit (optional: add pip-audit to dev deps)"
+description = "Dependency and code security checks (fails on findings)"
 run = """
-uv run pip-audit || true
+uv run --group security pip-audit
+uv run --group security bandit -q -r src
+"""
+
+[tasks.image]
+description = "Build the production image with Podman"
+run = "podman build -f .container/Containerfile --target prod -t template-sample-app:dev ."
+
+[tasks.scan]
+description = "Scan the built image for HIGH/CRITICAL vulnerabilities"
+run = """
+podman save -o /tmp/template-sample-app-image.tar template-sample-app:dev
+trivy image --input /tmp/template-sample-app-image.tar --severity HIGH,CRITICAL --exit-code 1
 """
 
 [tasks.ci]
-description = "CI gate: lint + tests + pre-commit"
+description = "Exactly what CI runs"
 run = """
-uv sync --dev
+uv sync --locked
 uv run pre-commit run --all-files
-uv run ruff check .
-uv run pytest
+uv run mypy
+uv run pytest -m "not live"
 """
