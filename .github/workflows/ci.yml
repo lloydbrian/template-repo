@@ -1,0 +1,14 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2      # installs the pinned Python and tools
+      - uses: astral-sh/setup-uv@v6
+      - run: mise run ci              # identical to the local pre-push check
+      - run: mise run image && mise run scan   # Podman is preinstalled on ubuntu-latest runners
