@@ -5,4 +5,4 @@ All notable changes to Template Sample App are recorded here. Format: [Keep a Ch
 ## [Unreleased]
 
 ### Added
-- Project scaffolded from python-project-template v2.0.0-rc.2 (service, Python 3.15).
+- Project scaffolded from python-project-template v2.0.0-rc.3 (service, Python 3.15).
