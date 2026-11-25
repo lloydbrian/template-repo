@@ -1,0 +1,6 @@
+# .trivyignore — documented, time-boxed exceptions to the image scan gate.
+# Every entry needs a reason, an owner and an expiry date; `mise run scan` fails on expired
+# or undocumented entries (tools/check_scan_exceptions.py). Process: SECURITY.md in the template.
+#
+# Format (one per vulnerability):
+#   CVE-2026-12345  # reason: <why it is not exploitable here>; owner: <name>; expires: YYYY-MM-DD

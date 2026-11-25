@@ -1,14 +1,16 @@
+# CI for this repo is the shared, versioned workflow from python-project-template.
+# Pipeline changes ship as template releases and arrive here through `copier update`.
 name: ci
 on:
   pull_request:
   push:
     branches: [main]
+permissions:
+  contents: read
 jobs:
   check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2      # installs the pinned Python and tools
-      - uses: astral-sh/setup-uv@v6
-      - run: mise run ci              # identical to the local pre-push check
-      - run: mise run image && mise run scan   # Podman is preinstalled on ubuntu-latest runners
+    uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.0-rc.3
+    with:
+      image: true
+      smoke: true
+      mise-version: "2026.11.14"

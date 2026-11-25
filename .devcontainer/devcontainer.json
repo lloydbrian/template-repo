@@ -1,13 +1,20 @@
 {
   "name": "template-sample-app-dev",
   "build": { "dockerfile": "../.container/Containerfile", "context": "..", "target": "dev" },
-  "runArgs": ["--userns=keep-id"],
-  "postCreateCommand": "uv sync --locked && uv run pre-commit install",
+  "runArgs": ["--userns=keep-id:uid=10001,gid=10001"],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind,Z",
+  "workspaceFolder": "/app",
+  "postCreateCommand": "uv sync --locked",
   "customizations": {
     "vscode": {
       "settings": { "python.defaultInterpreterPath": "/opt/venv/bin/python" },
-      "extensions": ["ms-python.python", "ms-python.vscode-pylance", "ms-python.debugpy",
-                     "charliermarsh.ruff", "tamasfe.even-better-toml", "ms-toolsai.jupyter"]
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml"
+      ]
     }
   }
 }

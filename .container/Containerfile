@@ -1,33 +1,51 @@
-# .container/Containerfile — one multi-stage file; build a stage with --target dev|test|prod
-FROM python:3.14-slim AS base
-# Patch OS packages at build time; remove pip (runtime never needs it; uv installs everything)
+# .container/Containerfile — one multi-stage file built with Podman: `podman build --target <stage>`.
+#
+#   python-base  patched OS, no pip, non-root user          (shared by every stage)
+#   build        uv installs the locked runtime deps + this package into /opt/venv (non-editable)
+#   dev          + dev tooling; your source is bind-mounted over /app (compose, dev container)
+#   test         + tests; the build fails if the tests fail
+#   prod         runtime venv only (no source tree, no uv, no pip), non-root
+#
+# Image names are fully qualified because Podman does not guess registries for short names.
+# Digests are pinned by the template release (`mise run pin-images`); see ADR 0007.
+FROM docker.io/library/python:3.15-slim@sha256:63bb298d2b7b88f176f51b5189f54ce6535c997682ea70885d2132f5d473a8a5 AS python-base
+# Patch OS packages at build time and remove pip: uv installs everything, and the base image's
+# pip bundles its own urllib3/msgpack/setuptools copies that scanners flag (ADR 0006).
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/* \
- && python -m pip uninstall -y pip
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
-    UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_NO_CACHE=1 \
-    PATH="/opt/venv/bin:$PATH"
-# Pin this tag to a specific uv release in real builds
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+ && python -m pip uninstall -y pip \
+ && useradd --create-home --uid 10001 app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PATH="/opt/venv/bin:$PATH"
+
+FROM python-base AS build
+COPY --from=ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d /uv /usr/local/bin/uv
+# venv outside /app so a bind-mounted source folder never hides it; no uv cache in layers
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_NO_CACHE=1 UV_PYTHON_DOWNLOADS=never
 WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
-RUN uv sync --locked --no-dev --no-install-project      # cached until the lockfile changes
+# --no-default-groups: runtime dependencies only (no dev, security tooling)
+RUN uv sync --locked --no-default-groups --no-editable --no-install-project
 COPY src ./src
-RUN uv sync --locked --no-dev
-RUN useradd --create-home app
+RUN uv sync --locked --no-default-groups --no-editable
 
-# dev: tooling included; source is bind-mounted over /app by compose or the dev container
-FROM base AS dev
-RUN uv sync --locked && chmod -R a+rwX /opt/venv        # dev only: let your mapped user update the venv
+FROM build AS dev
+# git: VS Code source control and pre-commit need it; the runtime stages do not get it
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+ && rm -rf /var/lib/apt/lists/* \
+ && uv sync --locked \
+ && chown -R app:app /opt/venv
 USER app
 
-# test: the build fails if the tests fail
-FROM base AS test
+FROM build AS test
+COPY tools ./tools
 COPY tests ./tests
-RUN uv sync --locked && pytest -m "not live"
-
-# prod: runtime only, non-root
-FROM base AS prod
+RUN uv sync --locked && chown -R app:app /app /opt/venv
 USER app
+RUN pytest -m "not live"
+
+FROM python-base AS prod
+COPY --from=build /opt/venv /opt/venv
+USER app
+WORKDIR /home/app
 EXPOSE 8000
-CMD ["uvicorn", "template_sample_app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "template_sample_app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

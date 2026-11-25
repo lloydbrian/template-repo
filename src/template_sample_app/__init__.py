@@ -1,1 +1,3 @@
-"""Sample FastAPI service built on the team Python scaffold."""
+"""Template Sample App: Reference FastAPI service generated from python-project-template"""
+
+__all__: list[str] = []
