@@ -1,27 +1,43 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
-from template_sample_app.config import load_env
+from template_sample_app.config import Settings, get_settings
 
 
-def test_load_env_reads_matching_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    (tmp_path / ".env.test").write_text("SAMPLE_FLAG=on\n", encoding="utf-8")
+@pytest.fixture(autouse=True)
+def _fresh_settings() -> None:
+    get_settings.cache_clear()
+
+
+def test_rejects_unknown_log_level() -> None:
+    with pytest.raises(ValidationError):
+        Settings(log_level="LOUD")  # type: ignore[arg-type]
+
+
+def test_rejects_privileged_port() -> None:
+    with pytest.raises(ValidationError):
+        Settings(http_port=80)
+
+
+def test_reads_matching_env_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / ".env.test").write_text("APP_TITLE=from-file\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("APP_ENV", "test")
-    monkeypatch.delenv("SAMPLE_FLAG", raising=False)
-    assert load_env() == "test"
-    import os
-
-    assert os.environ["SAMPLE_FLAG"] == "on"
+    monkeypatch.delenv("APP_TITLE", raising=False)
+    assert get_settings().app_title == "from-file"
 
 
 def test_real_environment_wins(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    (tmp_path / ".env.dev").write_text("SAMPLE_FLAG=file\n", encoding="utf-8")
+    (tmp_path / ".env.test").write_text("APP_TITLE=from-file\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("APP_ENV", "dev")
-    monkeypatch.setenv("SAMPLE_FLAG", "env")
-    load_env()
-    import os
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("APP_TITLE", "from-env")
+    assert get_settings().app_title == "from-env"
 
-    assert os.environ["SAMPLE_FLAG"] == "env"
+
+def test_invalid_environment_fails_fast(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOG_LEVEL", "NOPE")
+    with pytest.raises(ValidationError):
+        get_settings()

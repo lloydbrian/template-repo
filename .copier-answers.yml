@@ -1,0 +1,17 @@
+# Changes here will be overwritten by Copier; do not edit manually.
+# Records the answers and the template version this project was generated from.
+_commit: v2.0.0-rc.1
+_src_path: gh:lloydbrian/python-project-template
+ai_stack: none
+author_name: Lloyd D.
+coverage_threshold: 80
+description: Reference FastAPI service generated from python-project-template
+github_owner: lloydbrian
+http_port: 8000
+include_devcontainer: true
+license: Proprietary
+package_name: template_sample_app
+project_name: Template Sample App
+project_slug: template-sample-app
+project_type: service
+python_version: '3.15'

@@ -1,0 +1,20 @@
+# Release: push a tag matching the project version (pyproject.toml), e.g. v0.1.0.
+# The shared workflow builds amd64 and arm64 images natively, exports OCI archives, scans them,
+# writes SBOMs, records build provenance and attaches it all to a GitHub release. No registry.
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+jobs:
+  release:
+    uses: lloydbrian/python-project-template/.github/workflows/python-release.yml@v2.0.0-rc.1
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    with:
+      name: template-sample-app
+      target: prod
+      mise-version: "2026.11.14"

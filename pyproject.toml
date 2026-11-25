@@ -1,44 +1,49 @@
 [project]
 name = "template-sample-app"
 version = "0.1.0"
-description = "Sample FastAPI service built on the team Python scaffold"
+description = "Reference FastAPI service generated from python-project-template"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.15"
 authors = [{ name = "Lloyd D." }]
 dependencies = [
-  # Web service (this repo is a service, so the framework is a runtime dependency)
-  "fastapi>=0.115",
-  "uvicorn[standard]>=0.30",
-  # HTTP + retries (common for model/tool calls)
-  "httpx>=0.27",
-  "tenacity>=9.0",
-  # Validation, configuration and environment files
-  "pydantic>=2.7",
-  "python-dotenv>=1.0",
-  # CLI and readable output
-  "rich>=13.7",
-  "typer>=0.12",
+  # Web service: the framework is a runtime dependency because images install no extras
+  "fastapi>=0.165",
+  "uvicorn[standard]>=0.54",
+  # Typed settings that fail fast at startup (reads .env.<APP_ENV> via python-dotenv)
+  "pydantic-settings>=2.16",
+  # HTTP client with retries: the common path for model and tool calls
+  "httpx>=0.28.1",
+  "tenacity>=9.2",
+  # Validation at every boundary
+  "pydantic>=2.14",
+  # Readable CLI output and tracebacks
+  "rich>=15.0",
+  # Command-line entry point
+  "typer>=0.29",
 ]
-
-[project.optional-dependencies]       # optional features: uv sync --extra ai
-ai = ["numpy>=2.3", "pandas>=2.3"]
 
 [project.scripts]
 template-sample-app = "template_sample_app.cli:app"
 
-[dependency-groups]                   # tooling: installed by `uv sync`, never shipped
+[project.optional-dependencies]       # optional features: uv sync --extra ai
+ai = ["numpy>=2.5", "pandas>=3.1"]
+
+# Version floors are the latest releases at the template release, and never below a version with a
+# published security fix. uv.lock pins the exact versions; `uv lock --upgrade` moves them forward.
+[dependency-groups]                   # tooling: `uv sync` installs dev; nothing here ships
 dev = [
-  "pytest>=8.0",
-  "pytest-cov>=5.0",
-  "pytest-asyncio>=0.23",
-  "ruff>=0.17",
-  "mypy>=1.18",
-  "pre-commit>=4.0",
+  "pytest>=9.2",
+  "pytest-cov>=7.1",
+  "pytest-asyncio>=1.5",
+  "ruff>=0.17.6",
+  "mypy>=2.4",
+  "pre-commit>=4.7",
+  "httpx2>=2.16.2",                   # backend for FastAPI's TestClient (Starlette 1.10+ deprecates httpx there)
 ]
-security = ["pip-audit>=2.7", "bandit>=1.8"]
+security = ["pip-audit>=2.10.1", "bandit>=1.9.4"]
 
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=84.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -46,7 +51,7 @@ where = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py314"
+target-version = "py315"
 respect-gitignore = true
 
 [tool.ruff.lint]
@@ -59,14 +64,15 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.15"
 strict = true
 packages = ["template_sample_app"]
 mypy_path = "src"
 warn_unused_configs = true
+plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
-minversion = "8.0"
+minversion = "9.2"
 testpaths = ["tests"]
 addopts = "-ra --strict-markers --cov --cov-report=term-missing"
 asyncio_default_fixture_loop_scope = "function"
