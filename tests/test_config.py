@@ -41,3 +41,20 @@ def test_invalid_environment_fails_fast(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("LOG_LEVEL", "NOPE")
     with pytest.raises(ValidationError):
         get_settings()
+
+
+def test_blank_values_use_defaults(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # An env file carried over from an older project often has names with blank values.
+    (tmp_path / ".env.test").write_text("APP_TITLE=\nAPP_VERSION=\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.delenv("APP_TITLE", raising=False)
+    monkeypatch.delenv("APP_VERSION", raising=False)
+    settings = get_settings()
+    assert settings.app_title == Settings.model_fields["app_title"].default
+    assert settings.app_version == Settings.model_fields["app_version"].default
+
+
+def test_rejects_empty_title() -> None:
+    with pytest.raises(ValidationError):
+        Settings(app_title="")

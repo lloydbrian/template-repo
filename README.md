@@ -2,7 +2,7 @@
 
 Reference FastAPI service generated from python-project-template
 
-> Generated from **python-project-template v2.0.0-rc.1** as a **service** project on **Python 3.15**.
+> Generated from **python-project-template v2.0.0-rc.2** as a **service** project on **Python 3.15**.
 > The answers you gave are saved in `.copier-answers.yml`; `copier update` uses them to bring template improvements into this repo (see [Keeping up to date](#keeping-up-to-date)).
 > Containers are built and run with **Podman**, not Docker.
 
@@ -46,7 +46,7 @@ mise run ci                 # the same checks CI runs; must pass before you push
 git init
 mise trust && mise install && mise run bootstrap
 git add -A
-git commit -m "chore: scaffold from python-project-template v2.0.0-rc.1"
+git commit -m "chore: scaffold from python-project-template v2.0.0-rc.2"
 ```
 
 Commit `uv.lock` and `.copier-answers.yml`. They are what make builds reproducible and updates possible.
@@ -308,7 +308,7 @@ podman load -i template-sample-app-0.2.0-linux-arm64.oci.tar
 `.github/workflows/ci.yml` is a few lines long. It calls the template's shared workflow at a **pinned version**:
 
 ```yaml
-uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.0-rc.1
+uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.0-rc.2
 ```
 
 The shared workflow installs the pinned mise and runs `mise run ci`. It then builds the `test` stage, builds the image with Podman, scans it with trivy and uploads the SBOM, and runs the smoke test. All third-party actions and pre-commit hooks are pinned by commit SHA.

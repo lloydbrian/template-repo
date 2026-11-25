@@ -21,11 +21,13 @@ LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 class Settings(BaseSettings):
     """Every setting the service reads. Unknown variables are ignored; invalid ones fail."""
 
-    model_config = SettingsConfigDict(extra="ignore", frozen=True)
+    # env_ignore_empty: a blank value such as `APP_TITLE=` (common in older .env files) counts as
+    # unset, so the default applies. min_length still rejects an empty string passed in code.
+    model_config = SettingsConfigDict(extra="ignore", frozen=True, env_ignore_empty=True)
 
     app_env: Environment = "dev"
-    app_title: str = "Template Sample App"
-    app_version: str = "0.1.0"
+    app_title: str = Field(default="Template Sample App", min_length=1)
+    app_version: str = Field(default="0.1.0", min_length=1)
     log_level: LogLevel = "INFO"
     log_json: bool = True
     http_port: int = Field(default=8000, ge=1024, le=65535)
