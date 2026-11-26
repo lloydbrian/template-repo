@@ -2,7 +2,7 @@
 
 Reference FastAPI service generated from python-project-template
 
-> Generated from **python-project-template v2.0.0-rc.3** as a **service** project on **Python 3.15**.
+> Generated from **python-project-template v2.0.0** as a **service** project on **Python 3.15**.
 > The answers you gave are saved in `.copier-answers.yml`; `copier update` uses them to bring template improvements into this repo (see [Keeping up to date](#keeping-up-to-date)).
 > Containers are built and run with **Podman**, not Docker.
 
@@ -46,7 +46,7 @@ mise run ci                 # the same checks CI runs; must pass before you push
 git init
 mise trust && mise install && mise run bootstrap
 git add -A
-git commit -m "chore: scaffold from python-project-template v2.0.0-rc.3"
+git commit -m "chore: scaffold from python-project-template v2.0.0"
 ```
 
 Commit `uv.lock` and `.copier-answers.yml`. They are what make builds reproducible and updates possible.
@@ -295,9 +295,13 @@ To use a release:
 ```bash
 gh release download v0.2.0 -R lloydbrian/template-sample-app
 sha256sum -c SHA256SUMS
-gh attestation verify template-sample-app-0.2.0-linux-arm64.oci.tar -R lloydbrian/template-sample-app   # public repos
+gh attestation verify template-sample-app-0.2.0-linux-arm64.oci.tar -R lloydbrian/template-sample-app \
+  --signer-workflow lloydbrian/python-project-template/.github/workflows/python-release.yml \
+  --source-ref refs/tags/v0.2.0   # public repos
 podman load -i template-sample-app-0.2.0-linux-arm64.oci.tar
 ```
+
+`-R` assumes the GitHub repo is named `template-sample-app`. If it is not, use the real `owner/repo` in both commands. **Why `--signer-workflow`:** the provenance is signed by the template's shared `python-release.yml`, not by a workflow in this repo, so `gh` must be told which workflow to trust; `--source-ref` pins it to the release tag.
 
 **Why no registry:** nothing to authenticate to and no credentials in CI. An archive plus SBOM plus provenance is a complete, verifiable artifact. Adding a registry later is one extra job after the scan.
 
@@ -308,7 +312,7 @@ podman load -i template-sample-app-0.2.0-linux-arm64.oci.tar
 `.github/workflows/ci.yml` is a few lines long. It calls the template's shared workflow at a **pinned version**:
 
 ```yaml
-uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.0-rc.3
+uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.0
 ```
 
 The shared workflow installs the pinned mise and runs `mise run ci`. It then builds the `test` stage, builds the image with Podman, scans it with trivy and uploads the SBOM, and runs the smoke test. All third-party actions and pre-commit hooks are pinned by commit SHA.
