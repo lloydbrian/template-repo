@@ -9,7 +9,7 @@ permissions:
   contents: read
 jobs:
   check:
-    uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.0
+    uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.1
     with:
       image: true
       smoke: true
