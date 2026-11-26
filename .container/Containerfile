@@ -11,6 +11,10 @@
 FROM docker.io/library/python:3.15-slim@sha256:63bb298d2b7b88f176f51b5189f54ce6535c997682ea70885d2132f5d473a8a5 AS python-base
 # Patch OS packages at build time and remove pip: uv installs everything, and the base image's
 # pip bundles its own urllib3/msgpack/setuptools copies that scanners flag (ADR 0006).
+# OS_REFRESH re-runs this layer when its value changes: `mise run image` passes today's UTC date,
+# so a cached upgrade is never older than a day. The base is pinned by digest, so `--pull=newer`
+# alone never invalidates it, and a stale cache would keep packages from before a security fix.
+ARG OS_REFRESH=unset
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/* \
  && python -m pip uninstall -y pip \

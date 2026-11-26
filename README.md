@@ -2,7 +2,7 @@
 
 Reference FastAPI service generated from python-project-template
 
-> Generated from **python-project-template v2.0.0** as a **service** project on **Python 3.15**.
+> Generated from **python-project-template v2.0.1** as a **service** project on **Python 3.15**.
 > The answers you gave are saved in `.copier-answers.yml`; `copier update` uses them to bring template improvements into this repo (see [Keeping up to date](#keeping-up-to-date)).
 > Containers are built and run with **Podman**, not Docker.
 
@@ -46,7 +46,7 @@ mise run ci                 # the same checks CI runs; must pass before you push
 git init
 mise trust && mise install && mise run bootstrap
 git add -A
-git commit -m "chore: scaffold from python-project-template v2.0.0"
+git commit -m "chore: scaffold from python-project-template v2.0.1"
 ```
 
 Commit `uv.lock` and `.copier-answers.yml`. They are what make builds reproducible and updates possible.
@@ -106,7 +106,7 @@ Run `mise tasks` to list them. Every task exits non-zero on failure, so it can g
 | `mise run type` | `mypy` in strict mode | While coding |
 | `mise run test` | `pytest` with coverage; fails under 80% | While coding |
 | `mise run security` | `pip-audit` (dependency CVEs) and `bandit` (code patterns) | Before a release, and when adding dependencies |
-| `mise run image` | `podman build --pull=newer --target prod` → `template-sample-app:dev` | Before scanning or smoke-testing |
+| `mise run image` | `podman build --pull=newer --build-arg OS_REFRESH=<today> --target prod` → `template-sample-app:dev` | Before scanning or smoke-testing |
 | `mise run scan` | Validate `.trivyignore`, then trivy on the image; fails on fixable HIGH/CRITICAL | After `image` |
 | `mise run sbom` | CycloneDX SBOM of the image → `sbom.cdx.json` (git-ignored) | When you need an inventory |
 | `mise run serve` | Run the API locally with auto-reload on `http://127.0.0.1:8000` | Local development |
@@ -247,7 +247,7 @@ One multi-stage `.container/Containerfile`:
 | `prod` | Runtime `/opt/venv` only: no source tree, no uv, no pip, no compiler | `mise run image`, releases |
 
 ```bash
-podman build -f .container/Containerfile --target test .   # tests inside the image
+podman build --build-arg OS_REFRESH="$(date -u +%F)" -f .container/Containerfile --target test .   # tests inside the image (OS packages refreshed daily)
 mise run image                                             # prod image → template-sample-app:dev
 mise run scan                                              # fail on fixable HIGH/CRITICAL
 mise run smoke                                             # run it hardened, check health endpoints
@@ -258,7 +258,8 @@ podman compose -f .container/compose.yaml up               # local run on 127.0.
 
 - **Fully qualified image names** (`docker.io/library/python`, `ghcr.io/astral-sh/uv`): Podman does not guess a registry for short names, so builds are unambiguous.
 - **Digest pins**: a tag can be re-pointed; a digest cannot. The template release refreshes digests, and `copier update` brings them here. Digests are multi-arch index digests, so the same pin works on Apple silicon (arm64) and on amd64 CI runners.
-- **`--pull=newer`** on `mise run image` refreshes the base when a newer patch is published under the same tag (when no digest is pinned).
+- **`--pull=newer`** on `mise run image` refreshes the base when a newer patch is published under the same tag (when no digest is pinned). With a digest pin it changes nothing: the pin is the point.
+- **`OS_REFRESH`** (today's UTC date, passed by `mise run image`) re-runs the `apt-get upgrade` layer once a day. Podman otherwise reuses that cached layer for as long as the pinned base is unchanged, so a local image could keep OS packages from before a security fix while CI, which starts without a cache, has the fix. Rebuilds later the same day stay cached. To force it now: `podman build --no-cache ...`.
 - **No pip in the image**: uv installs everything. The base image's bundled pip ships its own copies of urllib3, setuptools and others that scanners flag, and pip is not needed at run time.
 - **`/opt/venv` outside `/app`**: a bind-mounted source folder never hides or clashes with the environment.
 - **`UV_NO_CACHE=1`** and **`.containerignore`**: no uv cache, `.git`, `.venv`, egg-info or secrets end up in layers.
@@ -276,7 +277,7 @@ podman compose -f .container/compose.yaml up               # local run on 127.0.
 CVE-2026-12345  # reason: not reachable, we never parse untrusted TAR files; owner: platform-team; expires: 2027-01-31
 ```
 
-`tools/check_scan_exceptions.py` runs first and fails the scan if any entry lacks these fields, has expired, or expires more than 90 days ahead, so exceptions cannot quietly become permanent. It also refuses a `trivy.yaml`, a VEX file, or `TRIVY_*` settings in `.mise.toml`: trivy reads them automatically, and they could skip paths or suppress findings without any of these checks. Prefer fixing: rebuild with `--pull=newer`, bump the dependency (`uv lock --upgrade-package <name>`), or `copier update` to pick up a newer base digest.
+`tools/check_scan_exceptions.py` runs first and fails the scan if any entry lacks these fields, has expired, or expires more than 90 days ahead, so exceptions cannot quietly become permanent. It also refuses a `trivy.yaml`, a VEX file, or `TRIVY_*` settings in `.mise.toml`: trivy reads them automatically, and they could skip paths or suppress findings without any of these checks. Prefer fixing: for an OS package, rebuild without the cache (`podman build --no-cache -f .container/Containerfile --target prod -t template-sample-app:dev .`, since `mise run image` refreshes OS packages only once a day); for a Python package, bump the dependency (`uv lock --upgrade-package <name>`); or `copier update` to pick up a newer base digest.
 
 `mise run sbom` writes a CycloneDX SBOM (`sbom.cdx.json`, git-ignored) of the image. CI uploads it as a build artifact.
 
@@ -312,7 +313,7 @@ podman load -i template-sample-app-0.2.0-linux-arm64.oci.tar
 `.github/workflows/ci.yml` is a few lines long. It calls the template's shared workflow at a **pinned version**:
 
 ```yaml
-uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.0
+uses: lloydbrian/python-project-template/.github/workflows/python-ci.yml@v2.0.1
 ```
 
 The shared workflow installs the pinned mise and runs `mise run ci`. It then builds the `test` stage, builds the image with Podman, scans it with trivy and uploads the SBOM, and runs the smoke test. All third-party actions and pre-commit hooks are pinned by commit SHA.
